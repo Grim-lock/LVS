@@ -409,6 +409,7 @@ void ip_vs_conn_fill_cport(struct ip_vs_conn *cp, __be16 cport)
 			atomic_dec(&ip_vs_conn_no_cport_cnt);
 			cp->flags &= ~IP_VS_CONN_F_NO_CPORT;
 			cp->cport = cport;
+            cp->in_idx->s_port = cport;
 		}
 		spin_unlock(&cp->lock);
 

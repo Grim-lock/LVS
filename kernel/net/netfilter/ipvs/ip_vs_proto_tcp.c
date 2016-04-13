@@ -1670,7 +1670,8 @@ static int tcp_app_conn_bind(struct ip_vs_conn *cp)
 	int result = 0;
 
 	/* Default binding: bind app only for NAT */
-	if (IP_VS_FWD_METHOD(cp) != IP_VS_CONN_F_MASQ)
+	if ((IP_VS_FWD_METHOD(cp) != IP_VS_CONN_F_MASQ) &&
+        (IP_VS_FWD_METHOD(cp) != IP_VS_CONN_F_FULLNAT))
 		return 0;
 
 	/* Lookup application incarnations and bind the right one */

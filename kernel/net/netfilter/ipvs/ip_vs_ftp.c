@@ -185,7 +185,7 @@ static int ip_vs_ftp_out(struct ip_vs_app *app, struct ip_vs_conn *cp,
 					      &cp->caddr, 0,
 					      &cp->vaddr, port,
 					      &from, port,
-					      IP_VS_CONN_F_NO_CPORT,
+					      IP_VS_CONN_F_NO_CPORT | (IP_VS_FWD_METHOD(cp) == IP_VS_CONN_F_FULLNAT ? IP_VS_CONN_F_FULLNAT : 0),
 					      cp->dest, NULL, 0);
 			if (!n_cp)
 				return 0;
@@ -323,7 +323,7 @@ static int ip_vs_ftp_in(struct ip_vs_app *app, struct ip_vs_conn *cp,
 				      &to, port,
 				      &cp->vaddr, htons(ntohs(cp->vport) - 1),
 				      &cp->daddr, htons(ntohs(cp->dport) - 1),
-				      0, cp->dest, NULL, 0);
+				      (IP_VS_FWD_METHOD(cp) == IP_VS_CONN_F_FULLNAT ? IP_VS_CONN_F_FULLNAT : 0), cp->dest, NULL, 0);
 		if (!n_cp)
 			return 0;
 

@@ -246,39 +246,6 @@ do {							\
 		(rt)->u.dst.dev, dst_output);		\
 } while (0)
 
-/* check if gso can handle the skb */
-static int gso_ok(struct sk_buff *skb, struct net_device *dev)
-{
-	if (skb_is_gso(skb)) {
-		/* LRO check */
-		if (unlikely(skb_shinfo(skb)->gso_type == 0)) {
-			IP_VS_ERR_RL("%s:LRO is enabled."
-					"Cannot be forwarded\n", dev->name);
-			IP_VS_INC_ESTATS(ip_vs_esmib, LRO_REJECT);
-			goto gso_err;
-		}
-
-		/* GRO check */
-		if (net_gso_ok(dev->features, skb_shinfo(skb)->gso_type)) {
-			/* the skb has frag_list, need do sth here */
-			if (skb_has_frags(skb) &&
-					!(dev->features & NETIF_F_FRAGLIST) &&
-							__skb_linearize(skb))
-				goto gso_err;
-
-			IP_VS_DBG_RL("skb length: %d . GSO is ok."
-					"can be forwarded\n", skb->len);
-			IP_VS_INC_ESTATS(ip_vs_esmib, GRO_PASS);
-			goto gso_ok;
-		}
-	}
-
-gso_err:
-	return 0;
-gso_ok:
-	return 1;
-}
-
 /*
  * Packet has been made sufficiently writable in caller
  * - inout: 1=in->out, 0=out->in
@@ -648,7 +615,7 @@ ip_vs_fast_response_xmit(struct sk_buff *skb, struct ip_vs_protocol *pp,
 
 	if (!cp->indev)
 		goto err;
-	if (!gso_ok(skb, cp->indev) && (skb->len > cp->indev->mtu))
+	if (!skb_is_gso(skb) && (skb->len > cp->indev->mtu))
 		goto err;
 
 	/* Try to reuse skb */
@@ -735,7 +702,7 @@ ip_vs_fast_response_xmit_v6(struct sk_buff *skb, struct ip_vs_protocol *pp,
 
 	if (!cp->indev)
 		goto err;
-	if (!gso_ok(skb, cp->indev) && (skb->len > cp->indev->mtu))
+	if (!skb_is_gso(skb) && (skb->len > cp->indev->mtu))
 		goto err;
 
 	/* Try to reuse skb if possible */
@@ -962,7 +929,7 @@ ip_vs_fnat_response_xmit(struct sk_buff *skb, struct ip_vs_protocol *pp,
 
 	/* MTU checking */
 	mtu = dst_mtu(&rt->u.dst);
-	if (!gso_ok(skb, rt->u.dst.dev) && (skb->len > mtu) &&
+	if (!skb_is_gso(skb) && (skb->len > mtu) &&
 					(iph->frag_off & htons(IP_DF))) {
 		ip_rt_put(rt);
 		IP_VS_INC_ESTATS(ip_vs_esmib, XMIT_UNEXPECTED_MTU);
@@ -1026,7 +993,7 @@ ip_vs_fnat_response_xmit_v6(struct sk_buff *skb, struct ip_vs_protocol *pp,
 
 	/* MTU checking */
 	mtu = dst_mtu(&rt->u.dst);
-	if (!gso_ok(skb, rt->u.dst.dev) && (skb->len > mtu)) {
+	if (!skb_is_gso(skb) && (skb->len > mtu)) {
 		dst_release(&rt->u.dst);
 		IP_VS_INC_ESTATS(ip_vs_esmib, XMIT_UNEXPECTED_MTU);
 		icmpv6_send(skb, ICMPV6_PKT_TOOBIG, 0, mtu, skb->dev);
@@ -1443,7 +1410,7 @@ ip_vs_fnat_xmit(struct sk_buff *skb, struct ip_vs_conn *cp,
 
 	/* MTU checking */
 	mtu = dst_mtu(&rt->u.dst);
-	if (!gso_ok(skb, rt->u.dst.dev) && (skb->len > mtu) &&
+	if (!skb_is_gso(skb) && (skb->len > mtu) &&
 					(iph->frag_off & htons(IP_DF))) {
 		ip_rt_put(rt);
 		IP_VS_INC_ESTATS(ip_vs_esmib, XMIT_UNEXPECTED_MTU);
@@ -1525,7 +1492,7 @@ ip_vs_fnat_xmit_v6(struct sk_buff *skb, struct ip_vs_conn *cp,
 
 	/* MTU checking */
 	mtu = dst_mtu(&rt->u.dst);
-	if (!gso_ok(skb, rt->u.dst.dev) && (skb->len > mtu)) {
+	if (!skb_is_gso(skb) && (skb->len > mtu)) {
 		dst_release(&rt->u.dst);
 		IP_VS_INC_ESTATS(ip_vs_esmib, XMIT_UNEXPECTED_MTU);
 		icmpv6_send(skb, ICMPV6_PKT_TOOBIG, 0, mtu, skb->dev);
