@@ -1393,7 +1393,7 @@ static const int tcp_state_off[IP_VS_DIR_LAST] = {
  */
 int sysctl_ip_vs_tcp_timeouts[IP_VS_TCP_S_LAST + 1] = {
 	[IP_VS_TCP_S_NONE] = 2 * HZ,
-	[IP_VS_TCP_S_ESTABLISHED] = 90 * HZ,
+	[IP_VS_TCP_S_ESTABLISHED] = 900 * HZ,
 	[IP_VS_TCP_S_SYN_SENT] = 3 * HZ,
 	[IP_VS_TCP_S_SYN_RECV] = 30 * HZ,
 	[IP_VS_TCP_S_FIN_WAIT] = 3 * HZ,
