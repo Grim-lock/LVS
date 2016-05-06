@@ -1301,6 +1301,8 @@ static void tcp_send_rst_out(struct ip_vs_protocol *pp, struct ip_vs_conn *cp)
 		iph->protocol = IPPROTO_TCP;
 		iph->saddr = cp->daddr.ip;
 		iph->daddr = cp->laddr.ip;
+        iph->tos = 0;
+        iph->id = 0;
 
 		ip_send_check(iph);
 
